@@ -18,3 +18,5 @@ from .anomalia import Anomalia
 
 from .mydenox import MyDenox
 from .sistema import Sistema
+
+from .preferencias_laboratorio import PreferenciasLaboratorio

@@ -165,6 +165,20 @@ def work():
             autor INTEGER NOT NULL REFERENCES User_Sys(user_id));
     """)
 
+    cursor.execute("""
+    CREATE TABLE `Preferencias_Lab` (
+	`usuario_lab_id`	INTEGER,
+	`lab_id`	INTEGER,
+	`temperatura_min`	INTEGER,
+	`temperatura_max`	INTEGER,
+	`luminosidade_min`	INTEGER,
+	`luminosidade_max`	INTEGER,
+	`umidade_min`	INTEGER,
+	`umidade_max`	INTEGER,
+	PRIMARY KEY(`usuario_lab_id`,`lab_id`)
+    );
+    """)
+
     conn.commit()
     conn.close()
 

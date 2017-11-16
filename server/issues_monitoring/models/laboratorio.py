@@ -302,3 +302,27 @@ class Laboratorio:
         if data is not None:
             return data
         return []
+
+    def obter_zona_de_conforto(lab_id):
+        data = db.fetchone("""
+            SELECT zc.temp_min, zc.temp_max, zc.umid_min,
+                zc.umid_max
+            FROM lab as l
+            INNER JOIN Zona_de_Conforto_Lab as zc
+                ON l.zona_conforto_id = zc.zona_conforto_id
+            WHERE l.lab_id = ?
+        """, (lab_id,))
+
+        if data is None:
+            return None
+
+        d = {
+            'temperatura_min': data[0],
+            'temperatura_max': data[1],
+            'luminosidade_min': None,
+            'luminosidade_max': None,
+            'umidade_min': data[2],
+            'umidade_max': data[3]
+        }
+
+        return d
