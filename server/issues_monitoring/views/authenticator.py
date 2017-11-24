@@ -1,22 +1,117 @@
 from flask import request, jsonify
-from .. import app
-from ..models import Laboratorio, PreferenciasLaboratorio
+from .. import app, controllers
+from ..models import Laboratorio, PreferenciasLaboratorio, UsuarioLab, Evento
+from datetime import datetime
+
+def autenticar():
+    auth = request.authorization
+
+    if not auth:
+        return None
+
+    try:
+        usuario_mydenox_id = int(auth.username)
+    except ValueError:
+        return None
+
+    usuario = controllers.obter_usuario_lab(usuario_mydenox_id)
+    if usuario is None:
+        return None
+
+    usuario_lab_id = usuario.id
+
+    # TO DO: Implementar token de autenticação/senha
+
+    return usuario_mydenox_id, usuario_lab_id 
 
 @app.route('/authenticator')
 def hello():
     return 'Hello'
 
+@app.route('/authenticator/entrada/<id>', methods=['POST'])
+def post_entrada(id):
+    autenticacao = autenticar()
+    if autenticacao is None:
+        return 'Unauthorized', 401
+    usuario_mydenox_id, usuario_lab_id = autenticacao
+
+    # TO DO: Checar se o usuário tem permissão para entrar no laboratório
+    
+    if Laboratorio.obter(id) is None:
+        return 'Unauthorized', 401
+
+    if UsuarioLab.presente(usuario_mydenox_id, id):
+        # O usuário já está presente no laboratório.
+        return '', 204
+
+    now = int(datetime.now().timestamp())
+
+    eventos = [Evento(now, 'IN', usuario_mydenox_id, id)]
+
+    UsuarioLab.registrar_presenca(eventos)
+
+    return '', 204
+
+@app.route('/authenticator/saida/<id>', methods=['POST'])
+def post_saida(id):
+    autenticacao = autenticar()
+    if autenticacao is None:
+        return 'Unauthorized', 401
+    usuario_mydenox_id, usuario_lab_id = autenticacao
+
+    # TO DO: Checar se o usuário tem permissão para entrar no laboratório
+
+    if Laboratorio.obter(id) is None:
+        return 'Unauthorized', 401
+    
+    if not UsuarioLab.presente(usuario_mydenox_id, id):
+        # O usuário não está presente no laboratório.
+        return '', 204
+
+    now = int(datetime.now().timestamp())
+
+    eventos = [Evento(now, 'OUT', usuario_mydenox_id, id)]
+
+    UsuarioLab.registrar_presenca(eventos)
+
+    return '', 204
+
 @app.route('/authenticator/preferencias', methods=['GET'])
 def get_preferencias():
-    usuario_lab_id = 1 # TODO: Receber através do header Authorization
+    autenticacao = autenticar()
+    if autenticacao is None:
+        return 'Unauthorized', 401
+    usuario_mydenox_id, usuario_lab_id = autenticacao
     
     prefs = PreferenciasLaboratorio.obter(usuario_lab_id)
 
-    return jsonify(prefs)
+    response = []
+    for x in prefs:
+        lab = Laboratorio.obter(x.lab_id)
+        
+        if lab is None:
+            # O laboratório foi removido
+            continue
+
+        response.append({
+            'id_laboratorio': x.lab_id,
+            'nome_laboratorio': lab.nome,
+            'temperatura_min': x.temperatura_min,
+            'temperatura_max': x.temperatura_max,
+            'luminosidade_min': x.luminosidade_min,
+            'luminosidade_max': x.luminosidade_max,
+            'umidade_min': x.umidade_min,
+            'umidade_max': x.umidade_max
+        })
+
+    return jsonify(response)
 
 @app.route('/authenticator/preferencias/<id>', methods=['POST'])
 def post_preferencias(id):
-    usuario_lab_id = 1 # TODO: Receber através do header Authorization
+    autenticacao = autenticar()
+    if autenticacao is None:
+        return 'Unauthorized', 401
+    usuario_mydenox_id, usuario_lab_id = autenticacao
 
     data = request.get_json(silent=True)
 
@@ -24,17 +119,11 @@ def post_preferencias(id):
         # Não foram enviadas preferências
         return 'Bad Request', 400
 
-    print (repr(data))
-
     zona_de_conforto = Laboratorio.obter_zona_de_conforto(id)
-    
-    print (repr(zona_de_conforto))
 
     if zona_de_conforto is None:
         # O laboratório não existe
         return 'Bad Request', 400
-
-    print('okay')
 
     if (('temperatura_min' in data and data['temperatura_min'] < zona_de_conforto['temperatura_min']) or
         ('temperatura_max' in data and data['temperatura_max'] > zona_de_conforto['temperatura_max']) or

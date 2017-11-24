@@ -234,3 +234,16 @@ class UsuarioLab(Usuario):
             (lab_id,
             user_id,
             False))
+
+    def presente(user_id, lab_id):
+        data = db.fetchone("""
+            SELECT presente
+            FROM Presenca
+            WHERE user_id = ?
+                AND lab_id = ?;
+        """, (user_id, lab_id))
+
+        if data is None:
+            return False
+
+        return data[0] == True
