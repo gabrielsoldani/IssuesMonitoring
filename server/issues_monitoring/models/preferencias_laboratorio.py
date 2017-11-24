@@ -24,6 +24,23 @@ class PreferenciasLaboratorio:
 
         return [PreferenciasLaboratorio(*x) for x in data]
 
+    def obter_do_laboratorio(usuario_lab_id, lab_id):
+        data = db.fetchone("""
+            SELECT
+                usuario_lab_id, lab_id, temperatura_min, temperatura_max,
+                luminosidade_min, luminosidade_max, umidade_min, umidade_max
+            FROM 
+                Preferencias_Lab
+            WHERE
+                usuario_lab_id = ? AND
+                lab_id = ?
+        """, (usuario_lab_id, lab_id))
+
+        if data is None:
+            return data
+
+        return PreferenciasLaboratorio(*data)
+
     def salvar(self):
         data = db.execute("""
             INSERT OR REPLACE INTO

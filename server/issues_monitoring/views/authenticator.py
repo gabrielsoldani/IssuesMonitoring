@@ -146,3 +146,54 @@ def post_preferencias(id):
     preferencias.salvar()
 
     return '', 204
+
+@app.route('/authenticator/notificacoes', methods=['GET'])
+@app.route('/authenticator/notificacoes/<int:data>', methods=['GET'])
+def get_notificacoes(data = -1):
+    autenticacao = autenticar()
+    if autenticacao is None:
+        return 'Unauthorized', 401
+    usuario_mydenox_id, usuario_lab_id = autenticacao
+
+    notificacoes = []
+
+    labs = Laboratorio.obter_laboratorios_autorizados(usuario_mydenox_id)
+
+    for lab_id, lab_nome in labs:
+        prefs = PreferenciasLaboratorio.obter_do_laboratorio(usuario_lab_id, lab_id)
+
+        if prefs is None:
+            continue
+
+        now = int(datetime.now().timestamp())
+        _, temperatura, umidade, luminosidade = Laboratorio.obter_ultima_medida(lab_id, data, now)
+
+        if temperatura is not None:
+            if prefs.temperatura_min is not None and temperatura < prefs.temperatura_min:
+                notificacoes.append({
+                    'titulo': 'Alerta de temperatura',
+                    'mensagem': 'A temperatura de {} ({:.0f}°C) está abaixo das suas preferências ({:d}°C).'.format(lab_nome, temperatura, prefs.temperatura_min)
+                })
+
+            if prefs.temperatura_max is not None and temperatura > prefs.temperatura_max:
+                notificacoes.append({
+                    'titulo': 'Alerta de temperatura',
+                    'mensagem': 'A temperatura de {} ({:.0f}°C) está acima das suas preferências ({:d}°C).'.format(lab_nome, temperatura, prefs.temperatura_max)
+                })
+        
+        if umidade is not None:
+            if prefs.umidade_min is not None and umidade < prefs.umidade_min:
+                notificacoes.append({
+                    'titulo': 'Alerta de umidade',
+                    'mensagem': 'A umidade de {} ({:.0f}%) está abaixo das suas preferências ({:d}%).'.format(lab_nome, umidade, prefs.umidade_min)
+                })
+
+            if prefs.umidade_max is not None and umidade > prefs.umidade_max:
+                notificacoes.append({
+                    'titulo': 'Alerta de umidade',
+                    'mensagem': 'A umidade de {} ({:.0f}%) está acima das suas preferências ({:d}%).'.format(lab_nome, umidade, prefs.umidade_max)
+                })
+        
+        # TO DO: Luminosidade
+
+    return jsonify(notificacoes)

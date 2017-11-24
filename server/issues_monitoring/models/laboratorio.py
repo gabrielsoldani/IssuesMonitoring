@@ -326,3 +326,30 @@ class Laboratorio:
         }
 
         return d
+
+    def obter_laboratorios_autorizados(user_id):
+        data = db.fetchall("""
+            SELECT lab_id
+            FROM Presenca
+            WHERE user_id = ?
+        """, (user_id,))
+
+        if data is None:
+            return []
+
+        result = []
+
+        lab_ids = [x[0] for x in data]
+        for lab_id in lab_ids:
+            data = db.fetchone("""
+                SELECT nome FROM Lab WHERE lab_id = ?
+            """, (lab_id,))
+
+            lab_nome = 'Sem nome'
+
+            if data is not None:
+                lab_nome = data[0]
+
+            result.append((lab_id, lab_nome))
+
+        return result
