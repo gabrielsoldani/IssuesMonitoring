@@ -1,3 +1,5 @@
+import string
+import random
 from datetime import datetime
 from ..common.utils import hoje
 from ..common.erros import UsuarioLabJaCadastrado
@@ -7,11 +9,12 @@ from . import db
 
 class UsuarioLab(Usuario):
     def __init__(self, user_id, nome, email, data_aprovacao = None,
-                 laboratorio = None, lab_id = None, data_entrada = None, data_evento = None, evento = None, id = None):
+                 laboratorio = None, lab_id = None, data_entrada = None, data_evento = None, evento = None, id = None, token = None):
         super().__init__(nome, email, data_aprovacao)
         self.user_id = user_id
         self.nome = nome
         self.email = email
+        self.token = token
         self.data_aprovacao = data_aprovacao
         self.lab_id = lab_id
         self.laboratorio = laboratorio
@@ -21,14 +24,14 @@ class UsuarioLab(Usuario):
         self.id = id
 
     def obter(user_id):
-        data = db.fetchone("""SELECT id, user_id, nome, email, data_aprov
+        data = db.fetchone("""SELECT id, user_id, nome, email, data_aprov, token
                            FROM User_Lab
                            WHERE user_id = ?;""",
                            (user_id,))
         if data is None:
             return data
 
-        return UsuarioLab(*data[1:], id=data[0])
+        return UsuarioLab(*data[1:-1], id=data[0], token=data[-1])
 
     def obter_todos():
         data = db.fetchall("SELECT id, user_id, nome, email, data_aprov FROM User_Lab")
@@ -93,11 +96,15 @@ class UsuarioLab(Usuario):
                 usuarios += [UsuarioLab(*d[:-1], data_entrada=d[-1])]
         return usuarios
 
+    def gerar_token():
+        return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+
     def cadastrar(self):
         values = (self.user_id,
                   self.nome,
                   self.email,
-                  self.data_aprovacao)
+                  self.data_aprovacao,
+                  UsuarioLab.gerar_token())
 
         data = UsuarioLab.obter(self.user_id)
 
@@ -106,13 +113,16 @@ class UsuarioLab(Usuario):
 
         db.execute("""
             INSERT INTO User_Lab
-            (user_id, nome, email, data_aprov)
-            VALUES (?, ?, ?, ?);""", values)
+            (user_id, nome, email, data_aprov, token)
+            VALUES (?, ?, ?, ?, ?);""", values)
 
         UsuarioLab.adicionar_ao_laboratorio(self.lab_id,
                                             self.user_id)
 
     def editar(self, old_user_id=None):
+        if self.token:
+            db.execute("UPDATE User_Lab SET token = ? WHERE id = ?;", (self.token, self.id))
+        
         db.execute("""
             UPDATE User_Lab
             SET nome = ?,

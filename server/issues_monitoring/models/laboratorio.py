@@ -6,11 +6,12 @@ from .medida import Medida_Lab, Medida_Equip
 from datetime import datetime
 
 class Laboratorio:
-    def __init__(self, nome, endereco, intervalo_parser,
+    def __init__(self, nome, endereco, wifi, intervalo_parser,
                  intervalo_arduino, zona_conforto_lab = None,
                  id = None, equipamentos = [], membros = []):
         self.nome              = nome
         self.endereco          = endereco
+        self.wifi              = wifi
         self.intervalo_parser  = intervalo_parser
         self.intervalo_arduino = intervalo_arduino
         self.zona_conforto_lab = zona_conforto_lab
@@ -61,7 +62,7 @@ class Laboratorio:
             return_id=True)
 
     def obter(id):
-        data = db.fetchone("""SELECT nome, endereco, intervalo_parser,
+        data = db.fetchone("""SELECT nome, endereco, wifi, intervalo_parser,
                                      intervalo_arduino, lab_id
                               FROM LAB
                               WHERE lab_id = ?;""", (id,))
@@ -71,7 +72,7 @@ class Laboratorio:
 
     def obter_todos():
         data = db.fetchall("SELECT nome, lab_id FROM Lab")
-        return [Laboratorio(d[0], None, None, None, None, d[1]) for d in data]
+        return [Laboratorio(d[0], None, None, None, None, None, d[1]) for d in data]
 
     def obter_todos_ids():
         data = db.fetchall("SELECT lab_id FROM Lab;")
@@ -79,7 +80,7 @@ class Laboratorio:
 
     def obter_informacoes():
         data = db.fetchall("""
-            SELECT l.lab_id, l.nome, l.endereco, l.intervalo_parser,
+            SELECT l.lab_id, l.nome, l.endereco, l.wifi, l.intervalo_parser,
             l.intervalo_arduino, zc.temp_min, zc.temp_max,
             zc.umid_min, zc.umid_max, l.lab_id,
             e.nome, e.descricao, e.temp_min, e.temp_max, e.end_mac, e.parent_id, e.equip_id,
@@ -102,9 +103,9 @@ class Laboratorio:
             usuarios_id.setdefault(d[0], {None})
 
             usuario_lab   = UsuarioLab(*d[-4:])
-            equipamento   = Computador(*d[9:-4])
-            zona_conforto = ZonaConforto(*d[5:10])
-            lab_info      = list(d[1:5]) + [zona_conforto]
+            equipamento   = Computador(*d[10:-4])
+            zona_conforto = ZonaConforto(*d[6:11])
+            lab_info      = list(d[1:6]) + [zona_conforto]
 
             _dict.setdefault(d[0], Laboratorio(*lab_info,
                                                membros=[],
@@ -126,11 +127,13 @@ class Laboratorio:
             UPDATE Lab
             SET nome = ?,
                 endereco = ?,
+                wifi = ?,
                 intervalo_parser = ?,
                 intervalo_arduino = ?
             WHERE lab_id = ?;""",
             (self.nome,
              self.endereco,
+             self.wifi,
              self.intervalo_parser,
              self.intervalo_arduino,
              self.id))
@@ -342,14 +345,14 @@ class Laboratorio:
         lab_ids = [x[0] for x in data]
         for lab_id in lab_ids:
             data = db.fetchone("""
-                SELECT nome FROM Lab WHERE lab_id = ?
+                SELECT nome, wifi FROM Lab WHERE lab_id = ?
             """, (lab_id,))
 
             lab_nome = 'Sem nome'
 
             if data is not None:
-                lab_nome = data[0]
+                lab_nome, lab_wifi = data
 
-            result.append((lab_id, lab_nome))
+            result.append((lab_id, lab_nome, lab_wifi))
 
         return result

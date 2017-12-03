@@ -25,6 +25,7 @@
                 <legend><span class="number">1</span> Informações do Laboratório</legend>
                 <input type="text" name="nome" placeholder="Nome do Laboratório" value="{{laboratorio.nome}}">
                 <textarea type="email" name="endereco" placeholder="Endereço (opcional)">{{laboratorio.endereco}}</textarea> 
+                <input type="text" name="wifi" placeholder="Rede Wi-Fi do Laboratório" value="{{laboratorio.wifi if laboratorio.wifi else ''}}">
             </fieldset>
             <fieldset>
                 <legend><span class="number">2</span> Intervalos de Coleta</legend>

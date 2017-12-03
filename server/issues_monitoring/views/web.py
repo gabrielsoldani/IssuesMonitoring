@@ -69,13 +69,6 @@ def laboratorios():
                            admin=admin_autenticado(),
                            pagina='laboratorios')
 
-    args = [id, nome, endereco, intervalo_parser, intervalo_arduino]
-    if "" not in args:
-        controllers.atualizar_informacoes_lab(*args)
-
-    kwargs = {"c" : "Informações atualizadas com sucesso"}
-    return redirect(url_for("laboratorio", id=id, nome=nome, **kwargs))
-
 @app.route('/laboratorio/<id>/')
 @app.route('/laboratorio/<id>/<nome>')
 def laboratorio(id, nome=""):
@@ -128,13 +121,16 @@ def editar_laboratorio_post(id, nome=""):
 
     nome = request.form.get("nome") or ''
     endereco = request.form.get("endereco") or ' '
+    wifi = request.form.get("wifi") or ' '
     intervalo_parser = request.form.get("intervalo-parser") or ''
     intervalo_arduino = request.form.get("intervalo-arduino") or ''
 
-    args = [id, nome, endereco, intervalo_parser, intervalo_arduino]
+    args = [id, nome, endereco, wifi, intervalo_parser, intervalo_arduino]
     if "" not in args:
         if (endereco is ' '):
             args[2] = ''
+        if (wifi is ' '):
+            args[3] = ''
         controllers.atualizar_informacoes_lab(*args)
         kwargs = {"c" : "Dados do laboratório atualizados com sucesso"}
         return redirect(url_for("laboratorio", id=id, nome=nome, **kwargs))
@@ -342,9 +338,11 @@ def alterar_usuario_lab(lab_id, lab_nome, id):
         user_id = request.form.get('id-user') or ''
         nome = request.form.get('nome') or ''
         email = request.form.get('email') or ''
+        token = request.form.get('token') or None
         userToEdit = controllers.obter_usuario_lab(id)
         userToEdit.nome = nome
         userToEdit.email = email
+        userToEdit.token = token
         userToEdit.user_id = user_id
         if (id != user_id):
             userToEdit.editar(old_user_id=id)

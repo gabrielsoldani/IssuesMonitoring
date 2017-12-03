@@ -18,6 +18,7 @@ def cadastro_laboratorio(nome, endereco, intervalo_parser,
 
     laboratorio = Laboratorio(nome,
                               endereco,
+                              None,
                               intervalo_parser,
                               intervalo_arduino,
                               zona_de_conforto)
@@ -37,10 +38,11 @@ def atualizar_zona_de_conforto(temp_min, temp_max, umid_min, umid_max, lab_id):
                                  lab_id)
     zona_conforto.editar()
 
-def atualizar_informacoes_lab(lab_id, nome, endereco, intervalo_parser,
+def atualizar_informacoes_lab(lab_id, nome, endereco, wifi, intervalo_parser,
                               intervalo_arduino):
     laboratorio = Laboratorio(nome,
                               endereco,
+                              wifi,
                               intervalo_parser,
                               intervalo_arduino,
                               id=lab_id)

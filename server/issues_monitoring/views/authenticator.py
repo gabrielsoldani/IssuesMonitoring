@@ -20,7 +20,12 @@ def autenticar():
 
     usuario_lab_id = usuario.id
 
-    # TO DO: Implementar token de autenticação/senha
+    # Não autorizar usuários que não tenham token definido (legado).
+    if usuario.token is None:
+        return None
+
+    if usuario.token != auth.password:
+        return None
 
     return usuario_mydenox_id, usuario_lab_id 
 
@@ -76,6 +81,25 @@ def post_saida(id):
 
     return '', 204
 
+@app.route('/authenticator/laboratorios', methods=['GET'])
+def get_laboratorios():
+    autenticacao = autenticar()
+    if autenticacao is None:
+        return 'Unauthorized', 401
+    usuario_mydenox_id, usuario_lab_id = autenticacao
+
+    labs = Laboratorio.obter_laboratorios_autorizados(usuario_mydenox_id)
+
+    response = []
+    for lab_id, lab_nome, lab_wifi in labs:
+        response.append({
+            'id': lab_id,
+            'nome': lab_nome,
+            'wifi': lab_wifi
+        })
+
+    return jsonify(response)
+
 @app.route('/authenticator/preferencias', methods=['GET'])
 def get_preferencias():
     autenticacao = autenticar()
@@ -108,6 +132,7 @@ def get_preferencias():
 
 @app.route('/authenticator/preferencias/<id>', methods=['POST'])
 def post_preferencias(id):
+    print('hey')
     autenticacao = autenticar()
     if autenticacao is None:
         return 'Unauthorized', 401
@@ -159,7 +184,7 @@ def get_notificacoes(data = -1):
 
     labs = Laboratorio.obter_laboratorios_autorizados(usuario_mydenox_id)
 
-    for lab_id, lab_nome in labs:
+    for lab_id, lab_nome, _ in labs:
         prefs = PreferenciasLaboratorio.obter_do_laboratorio(usuario_lab_id, lab_id)
 
         if prefs is None:

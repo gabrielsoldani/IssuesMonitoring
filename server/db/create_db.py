@@ -26,6 +26,7 @@ def work():
             zona_conforto_id INTEGER NOT NULL REFERENCES Zona_de_Conforto_Lab(zona_conforto_id),
             nome CHAR(255) NOT NULL,
             endereco CHAR(255) NOT NULL,
+            wifi CHAR(255),
             intervalo_parser INTEGER NOT NULL,
             intervalo_arduino INTEGER NOT NULL);
     """)
@@ -66,6 +67,7 @@ def work():
             user_id CHAR(4) NOT NULL,
             nome CHAR(255) NOT NULL,
             email CHAR(255) NOT NULL,
+            token CHAR(255),
             data_aprov INTEGER);
     """)
 

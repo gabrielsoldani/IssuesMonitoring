@@ -23,6 +23,7 @@
                 <legend><span class="number">2</span> Dados do Usuário</legend>
                 <input type="text" name="nome" placeholder="Nome do usuário" value="{{user.nome}}">
                 <input type="text" name="email" placeholder="E-mail do usuário" value="{{user.email}}">
+                <input type="text" name="token" placeholder="Token" value="{{user.token if user.token else ''}}">
             </fieldset>
             <input type="submit" value="Salvar Alterações" />
         </form>
